@@ -3,9 +3,9 @@ cmake_minimum_required(VERSION 3.4)
 
 # enable MSVC_RUNTIME_LIBRARY target property
 # see https://cmake.org/cmake/help/latest/policy/CMP0091.html
-if(POLICY CMP0091)
-  cmake_policy(SET CMP0091 NEW)
-endif()
+#if(POLICY CMP0091)
+#  cmake_policy(SET CMP0091 NEW)
+#endif()
 
 project(YAML_CPP VERSION 0.7.0 LANGUAGES CXX)
 
@@ -20,6 +20,7 @@ find_program(YAML_CPP_CLANG_FORMAT_EXE NAMES clang-format)
 option(YAML_CPP_BUILD_CONTRIB "Enable yaml-cpp contrib in library" ON)
 option(YAML_CPP_BUILD_TOOLS "Enable parse tools" ON)
 option(YAML_BUILD_SHARED_LIBS "Build yaml-cpp shared library" ${BUILD_SHARED_LIBS})
+option(YAML_MSVC_SHARED_RT "Build yaml-cpp shared library" ${BUILD_SHARED_LIBS})
 
 cmake_dependent_option(YAML_CPP_BUILD_TESTS
   "Enable yaml-cpp tests" ON
@@ -27,9 +28,9 @@ cmake_dependent_option(YAML_CPP_BUILD_TESTS
 cmake_dependent_option(YAML_CPP_INSTALL
   "Enable generation of yaml-cpp install targets" ON
   "CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR" OFF)
-cmake_dependent_option(YAML_MSVC_SHARED_RT
-  "MSVC: Build yaml-cpp with shared runtime libs (/MD)" ON
-  "MSVC" OFF)
+#cmake_dependent_option(YAML_MSVC_SHARED_RT
+#  "MSVC: Build yaml-cpp with shared runtime libs (/MD)" ON
+#  "MSVC" OFF)
 
 set(yaml-cpp-type STATIC)
 set(yaml-cpp-label-postfix "static")
@@ -43,10 +44,10 @@ set(build-windows-dll $<AND:$<BOOL:${CMAKE_HOST_WIN32}>,${build-shared}>)
 set(not-msvc $<NOT:$<CXX_COMPILER_ID:MSVC>>)
 set(msvc-shared_rt $<BOOL:${YAML_MSVC_SHARED_RT}>)
 
-if (NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
-  set(CMAKE_MSVC_RUNTIME_LIBRARY
-    MultiThreaded$<$<CONFIG:Debug>:Debug>$<${msvc-shared_rt}:DLL>)
-endif()
+#if (NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
+#  set(CMAKE_MSVC_RUNTIME_LIBRARY
+#    MultiThreaded$<$<CONFIG:Debug>:Debug>$<${msvc-shared_rt}:DLL>)
+#endif()
 
 set(contrib-pattern "src/contrib/*.cpp")
 set(src-pattern "src/*.cpp")
@@ -58,22 +59,22 @@ endif()
 file(GLOB yaml-cpp-contrib-sources ${contrib-pattern})
 file(GLOB yaml-cpp-sources ${src-pattern})
 
-set(msvc-rt $<TARGET_PROPERTY:MSVC_RUNTIME_LIBRARY>)
+#set(msvc-rt $<TARGET_PROPERTY:MSVC_RUNTIME_LIBRARY>)
 
-set(msvc-rt-mtd-static $<STREQUAL:${msvc-rt},MultiThreadedDebug>)
-set(msvc-rt-mt-static $<STREQUAL:${msvc-rt},MultiThreaded>)
+#set(msvc-rt-mtd-static $<STREQUAL:${msvc-rt},MultiThreadedDebug>)
+#set(msvc-rt-mt-static $<STREQUAL:${msvc-rt},MultiThreaded>)
 
-set(msvc-rt-mtd-dll $<STREQUAL:${msvc-rt},MultiThreadedDebugDLL>)
-set(msvc-rt-mt-dll $<STREQUAL:${msvc-rt},MultiThreadedDLL>)
+#set(msvc-rt-mtd-dll $<STREQUAL:${msvc-rt},MultiThreadedDebugDLL>)
+#set(msvc-rt-mt-dll $<STREQUAL:${msvc-rt},MultiThreadedDLL>)
 
-set(backport-msvc-runtime $<VERSION_LESS:${CMAKE_VERSION},3.15>)
+#set(backport-msvc-runtime $<VERSION_LESS:${CMAKE_VERSION},3.15>)
 
 add_library(yaml-cpp ${yaml-cpp-type} "")
 add_library(yaml-cpp::yaml-cpp ALIAS yaml-cpp)
 
-set_property(TARGET yaml-cpp
-  PROPERTY
-    MSVC_RUNTIME_LIBRARY ${CMAKE_MSVC_RUNTIME_LIBRARY})
+#set_property(TARGET yaml-cpp
+#  PROPERTY
+#    MSVC_RUNTIME_LIBRARY ${CMAKE_MSVC_RUNTIME_LIBRARY})
 set_property(TARGET yaml-cpp
   PROPERTY
     CXX_STANDARD_REQUIRED ON)
@@ -91,21 +92,25 @@ if (NOT DEFINED CMAKE_CXX_STANDARD)
       CXX_STANDARD 11)
 endif()
 
-target_compile_options(yaml-cpp
-  PRIVATE
-    $<${not-msvc}:-Wall -Wextra -Wshadow -Weffc++ -Wno-long-long>
-    $<${not-msvc}:-pedantic -pedantic-errors>
+message("VCPKG:${VCPKG}")
+message("VCPKG_TARGET_TRIPLET:${VCPKG_TARGET_TRIPLET}")
 
-    $<$<AND:${backport-msvc-runtime},${msvc-rt-mtd-static}>:-MTd>
-    $<$<AND:${backport-msvc-runtime},${msvc-rt-mt-static}>:-MT>
-    $<$<AND:${backport-msvc-runtime},${msvc-rt-mtd-dll}>:-MDd>
-    $<$<AND:${backport-msvc-runtime},${msvc-rt-mt-dll}>:-MD>
+#target_compile_options(yaml-cpp
+#  PRIVATE
+#    $<${not-msvc}:-Wall -Wextra -Wshadow -Weffc++ -Wno-long-long>
+#    $<${not-msvc}:-pedantic -pedantic-errors>
+
+    #$<$<AND:${backport-msvc-runtime},${msvc-rt-mtd-static}>:/MTd>
+    #$<$<AND:${backport-msvc-runtime},${msvc-rt-mt-static}>:/MT>
+    #$<$<AND:${backport-msvc-runtime},${msvc-rt-mtd-dll}>:/MDd>
+    #$<$<AND:${backport-msvc-runtime},${msvc-rt-mt-dll}>:/MD>
 
     # /wd4127 = disable warning C4127 "conditional expression is constant"
     # http://msdn.microsoft.com/en-us/library/6t66728h.aspx
     # /wd4355 = disable warning C4355 "'this' : used in base member initializer list
     # http://msdn.microsoft.com/en-us/library/3c594ae3.aspx
-    $<$<CXX_COMPILER_ID:MSVC>:/W3 /wd4127 /wd4355>)
+    #$<$<CXX_COMPILER_ID:MSVC>:/W3 /wd4127 /wd4355>
+#    )
 
 target_compile_definitions(yaml-cpp
   PRIVATE
